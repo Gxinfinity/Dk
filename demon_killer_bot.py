@@ -1,20 +1,20 @@
-Demon Killer – Single File Advanced Telegram Game Bot
+#Demon Killer – Single File Advanced Telegram Game Bot
 
-Safe fantasy RPG for teens. No graphic violence.
+#Safe fantasy RPG for teens. No graphic violence.
 
-Library: python-telegram-bot v20+
+#Library: python-telegram-bot v20+
 
-Features:
+#Features:
 
-- /start, /profile, /hunt, /battle, /shop, /buy, /equip, /inventory
+#- /start, /profile, /hunt, /battle, /shop, /buy, /equip, /inventory
 
-- Inline buttons (Strength / Potion)
+#- Inline buttons (Strength / Potion)
 
-- Demon AI (simple adaptive stats)
+#- Demon AI (simple adaptive stats)
 
-- Photos/GIFs via URLs
+#- Photos/GIFs via URLs
 
-- In‑memory DB (can be swapped to MongoDB)
+#- In‑memory DB (can be swapped to MongoDB)
 
 import random from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
