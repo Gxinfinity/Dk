@@ -1,332 +1,191 @@
-# =========================================================
-# 🔥 DEMON KILLER UNIVERSE – SINGLE FILE ADVANCED BOT
-# Library: python-telegram-bot v20+
-# Safe fantasy RPG + mini games + stylish UI
-# =========================================================
-
 import random
-import asyncio
-from datetime import datetime
-
 from telegram import (
     Update,
     InlineKeyboardButton,
-    InlineKeyboardMarkup,
+    InlineKeyboardMarkup
 )
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     CallbackQueryHandler,
-    ContextTypes,
+    ContextTypes
 )
 
-# ========================
-# CONFIG
-# ========================
+TOKEN = "PASTE_YOUR_BOT_TOKEN_HERE"
 
-TOKEN = "PUT_YOUR_BOT_TOKEN_HERE"
-
-# ========================
-# DATABASE (IN-MEMORY)
-# ========================
-
-USERS = {}
-GLOBAL_BOSS = {"hp": 3000, "alive": True}
-
-# ========================
-# DATA
-# ========================
-
-DEMONS = [
-    {"name": "Shadow Imp", "hp": 40, "atk": 6},
-    {"name": "Flame Wraith", "hp": 60, "atk": 8},
-    {"name": "Frost Oni", "hp": 80, "atk": 10},
+# ---------------- CHATBOT LINES ----------------
+SAVAGE_LINES = [
+    "😈 Galat move tha bhai",
+    "💀 Screenshot le, yaad rahega",
+    "😏 Dimag off mode detected",
+    "🔥 Risk lena mehnga pad gaya"
 ]
 
-SHOP = {
-    "katana": {"price": 50, "atk": 5},
-    "armor": {"price": 40, "def": 4},
-    "potion": {"price": 15, "heal": 20},
-}
-
-# ========================
-# HELPERS
-# ========================
-
-def get_user(uid):
-    if uid not in USERS:
-        USERS[uid] = {
-            "hp": 100,
-            "max_hp": 100,
-            "atk": 10,
-            "def": 2,
-            "coins": 50,
-            "inv": [],
-            "wins": 0,
-            "last_daily": None,
-        }
-    return USERS[uid]
-
-
-def hp_bar(cur, max_hp):
-    filled = int((cur / max_hp) * 10)
-    return "█" * filled + "░" * (10 - filled)
-
-
-async def animate(message, frames, delay=0.4):
-    for f in frames:
-        await message.edit_text(f)
-        await asyncio.sleep(delay)
-
-# ========================
-# COMMANDS (CORE RPG)
-# ========================
-
+# ---------------- START ----------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    get_user(update.effective_user.id)
-    await update.message.reply_text(
-        "🔥 *Demon Killer Universe*\n\n"
-        "⚔️ RPG • 🎰 Games • 🏆 PvP\n\n"
-        "Commands:\n"
-        "/hunt /profile /shop /boss /daily /games",
-        parse_mode="Markdown",
-    )
-
-
-async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    u = get_user(update.effective_user.id)
-    text = (
-        f"👤 *Profile*\n"
-        f"❤️ HP: {hp_bar(u['hp'], u['max_hp'])} {u['hp']}/{u['max_hp']}\n"
-        f"⚔️ ATK: {u['atk']}  🛡️ DEF: {u['def']}\n"
-        f"💰 Coins: {u['coins']}\n"
-        f"🏆 Wins: {u['wins']}\n"
-        f"🎒 Inv: {', '.join(u['inv']) or 'Empty'}"
-    )
-    await update.message.reply_text(text, parse_mode="Markdown")
-
-
-async def hunt(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    demon = random.choice(DEMONS).copy()
-    context.user_data["demon"] = demon
-
-    kb = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("⚔️ Attack", callback_data="fight_atk"),
-            InlineKeyboardButton("🧪 Potion", callback_data="fight_potion"),
-        ],
-        [InlineKeyboardButton("🏃 Escape", callback_data="fight_run")]
-    ])
-
-    await update.message.reply_text(
-        f"👹 *{demon['name']}*\n"
-        f"❤️ HP: {demon['hp']}  ⚔️ ATK: {demon['atk']}",
-        parse_mode="Markdown",
-        reply_markup=kb,
-    )
-
-
-async def shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    buttons = [
-        [InlineKeyboardButton(f"Buy {k} ({v['price']}💰)", callback_data=f"buy_{k}")]
-        for k, v in SHOP.items()
+    keyboard = [
+        [InlineKeyboardButton("❌⭕ XO Kill", callback_data="xo")],
+        [InlineKeyboardButton("🔫 Roulette", callback_data="roulette")],
+        [InlineKeyboardButton("💣 Bomb Pass", callback_data="bomb")],
+        [InlineKeyboardButton("⚡ Fast Tap", callback_data="fasttap")],
+        [InlineKeyboardButton("❓ Help", callback_data="help")]
     ]
     await update.message.reply_text(
-        "🛒 *Shop*",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(buttons),
+        "💀 **KILL GAME ARENA**\nChoose your death 😈",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
     )
 
-
-async def daily(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    u = get_user(update.effective_user.id)
-    today = datetime.utcnow().date()
-
-    if u["last_daily"] == today:
-        await update.message.reply_text("⏳ Daily already claimed.")
-        return
-
-    reward = random.randint(30, 60)
-    u["coins"] += reward
-    u["last_daily"] = today
-    await update.message.reply_text(f"🎁 Daily reward: +{reward} coins")
-
-# ========================
-# MINI GAMES
-# ========================
-
-async def games(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    kb = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🎰 Slots", callback_data="game_slots")],
-        [InlineKeyboardButton("🎲 Dice", callback_data="game_dice")],
-        [InlineKeyboardButton("🪙 Coin Flip", callback_data="game_coin")],
-    ])
-    await update.message.reply_text("🎮 *Mini Games*", parse_mode="Markdown", reply_markup=kb)
-
-
-# ========================
-# BOSS RAID
-# ========================
-
-async def boss(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not GLOBAL_BOSS["alive"]:
-        await update.message.reply_text("🏆 Boss already defeated!")
-        return
-
-    kb = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔥 Attack Boss", callback_data="boss_attack")]
-    ])
-
-    await update.message.reply_text(
-        f"👑 *World Boss*\n"
-        f"❤️ HP: {GLOBAL_BOSS['hp']}",
+# ---------------- HELP ----------------
+async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await query.edit_message_text(
+        "🎮 **HELP**\n\n"
+        "❌⭕ XO = 3 in row = KILL\n"
+        "🔫 Roulette = 1 bullet\n"
+        "💣 Bomb = random blast\n"
+        "⚡ Fast Tap = slow = dead\n\n"
+        "No typing. Only tap 😈",
         parse_mode="Markdown",
-        reply_markup=kb,
-    )
-
-# ========================
-# CALLBACKS
-# ========================
-
-async def fight_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    q = update.callback_query
-    await q.answer()
-
-    u = get_user(q.from_user.id)
-    demon = context.user_data.get("demon")
-
-    if not demon:
-        await q.edit_message_text("No demon. Use /hunt")
-        return
-
-    if q.data == "fight_atk":
-        dmg = max(1, u["atk"] - random.randint(0, 3))
-        demon["hp"] -= dmg
-
-    elif q.data == "fight_potion":
-        if "potion" in u["inv"]:
-            u["inv"].remove("potion")
-            u["hp"] = min(u["max_hp"], u["hp"] + 20)
-        else:
-            await q.edit_message_text("❌ No potion!")
-            return
-
-    elif q.data == "fight_run":
-        context.user_data.pop("demon", None)
-        await q.edit_message_text("🏃 You escaped!")
-        return
-
-    # demon attacks
-    u["hp"] -= max(1, demon["atk"] - u["def"])
-
-    if demon["hp"] <= 0:
-        reward = random.randint(10, 25)
-        u["coins"] += reward
-        u["wins"] += 1
-        context.user_data.pop("demon", None)
-        await q.edit_message_text(f"🏆 Demon defeated! +{reward}💰")
-
-    elif u["hp"] <= 0:
-        u["hp"] = u["max_hp"]
-        context.user_data.pop("demon", None)
-        await q.edit_message_text("💀 You fainted! HP restored.")
-
-    else:
-        await q.edit_message_text(
-            f"👹 {demon['name']}\n"
-            f"❤️ Demon HP: {demon['hp']}\n"
-            f"❤️ Your HP: {u['hp']}",
-            reply_markup=q.message.reply_markup,
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("⬅ Back", callback_data="back")]]
         )
+    )
 
+# ---------------- XO GAME ----------------
+def new_board():
+    return ["⬜"] * 9
 
-async def buy_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    q = update.callback_query
-    await q.answer()
-    u = get_user(q.from_user.id)
+def board_markup(board):
+    buttons = []
+    for i in range(0, 9, 3):
+        row = [
+            InlineKeyboardButton(board[i], callback_data=f"xo_{i}"),
+            InlineKeyboardButton(board[i+1], callback_data=f"xo_{i+1}"),
+            InlineKeyboardButton(board[i+2], callback_data=f"xo_{i+2}")
+        ]
+        buttons.append(row)
+    buttons.append([InlineKeyboardButton("🏳 Surrender", callback_data="back")])
+    return InlineKeyboardMarkup(buttons)
 
-    item = q.data.replace("buy_", "")
-    data = SHOP[item]
+def check_win(b):
+    wins = [(0,1,2),(3,4,5),(6,7,8),(0,3,6),(1,4,7),(2,5,8),(0,4,8),(2,4,6)]
+    for a,b1,c in wins:
+        if b[a] != "⬜" and b[a] == b[b1] == b[c]:
+            return True
+    return False
 
-    if u["coins"] < data["price"]:
-        await q.edit_message_text("❌ Not enough coins")
+async def xo_start(update, context):
+    query = update.callback_query
+    await query.answer()
+    board = new_board()
+    context.user_data["board"] = board
+    await query.edit_message_text(
+        "❌⭕ **XO KILL GAME**\nYour turn ❌\n\n" + random.choice(SAVAGE_LINES),
+        parse_mode="Markdown",
+        reply_markup=board_markup(board)
+    )
+
+async def xo_move(update, context):
+    query = update.callback_query
+    await query.answer()
+    board = context.user_data.get("board")
+    idx = int(query.data.split("_")[1])
+
+    if board[idx] != "⬜":
         return
 
-    u["coins"] -= data["price"]
-    u["inv"].append(item)
-
-    if "atk" in data:
-        u["atk"] += data["atk"]
-    if "def" in data:
-        u["def"] += data["def"]
-
-    await q.edit_message_text(f"✅ Bought {item}")
-
-
-async def games_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    q = update.callback_query
-    await q.answer()
-    u = get_user(q.from_user.id)
-
-    if q.data == "game_coin":
-        win = random.choice([True, False])
-        if win:
-            u["coins"] += 10
-            await q.edit_message_text("🪙 You WON! +10💰")
-        else:
-            await q.edit_message_text("🪙 You lost!")
-
-    elif q.data == "game_dice":
-        roll = random.randint(1, 6)
-        await q.edit_message_text(f"🎲 Dice rolled: {roll}")
-
-    elif q.data == "game_slots":
-        slots = random.choice(["🍒🍒🍒", "🍋🍋🍒", "🍎🍋🍒"])
-        await q.edit_message_text(f"🎰 {slots}")
-
-
-async def boss_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    q = update.callback_query
-    await q.answer()
-    u = get_user(q.from_user.id)
-
-    if not GLOBAL_BOSS["alive"]:
-        await q.edit_message_text("Boss already defeated")
+    board[idx] = "❌"
+    if check_win(board):
+        await query.edit_message_text("☠️ **YOU KILLED THE BOT** 😈", parse_mode="Markdown")
         return
 
-    dmg = random.randint(5, 15)
-    GLOBAL_BOSS["hp"] -= dmg
+    empty = [i for i,v in enumerate(board) if v=="⬜"]
+    if not empty:
+        await query.edit_message_text("💣 DRAW! Sudden death avoided")
+        return
 
-    if GLOBAL_BOSS["hp"] <= 0:
-        GLOBAL_BOSS["alive"] = False
-        u["coins"] += 100
-        await q.edit_message_text("🏆 WORLD BOSS DEFEATED!\n+100💰")
+    board[random.choice(empty)] = "⭕"
+    if check_win(board):
+        await query.edit_message_text("💀 **BOT EXECUTED YOU**\n" + random.choice(SAVAGE_LINES), parse_mode="Markdown")
+        return
+
+    await query.edit_message_text(
+        "❌⭕ XO KILL\nYour turn 😏",
+        reply_markup=board_markup(board)
+    )
+
+# ---------------- ROULETTE ----------------
+async def roulette(update, context):
+    query = update.callback_query
+    await query.answer()
+    if random.randint(1,6) == 1:
+        text = "💀 **BANG! You are dead**"
     else:
-        await q.edit_message_text(f"🔥 You hit boss for {dmg}\nBoss HP: {GLOBAL_BOSS['hp']}")
+        text = "😎 Click survived. Lucky!"
+    await query.edit_message_text(text, parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅ Back", callback_data="back")]])
+    )
 
-# ========================
-# MAIN
-# ========================
+# ---------------- BOMB ----------------
+async def bomb(update, context):
+    query = update.callback_query
+    await query.answer()
+    result = random.choice(["💣 BOOM! Dead", "😅 Passed safely"])
+    await query.edit_message_text(
+        result,
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅ Back", callback_data="back")]])
+    )
 
+# ---------------- FAST TAP ----------------
+async def fasttap(update, context):
+    query = update.callback_query
+    await query.answer()
+    await query.edit_message_text(
+        "⚡ **FAST TAP!**\nClick NOW!",
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔥 TAP", callback_data="tap_result")]])
+    )
+
+async def tap_result(update, context):
+    query = update.callback_query
+    await query.answer()
+    if random.choice([True, False]):
+        msg = "🔥 FAST! You survived"
+    else:
+        msg = "💀 TOO SLOW! Dead"
+    await query.edit_message_text(
+        msg,
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅ Back", callback_data="back")]])
+    )
+
+# ---------------- CALLBACK ROUTER ----------------
+async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    data = update.callback_query.data
+
+    if data == "xo":
+        await xo_start(update, context)
+    elif data.startswith("xo_"):
+        await xo_move(update, context)
+    elif data == "roulette":
+        await roulette(update, context)
+    elif data == "bomb":
+        await bomb(update, context)
+    elif data == "fasttap":
+        await fasttap(update, context)
+    elif data == "tap_result":
+        await tap_result(update, context)
+    elif data == "help":
+        await help_menu(update, context)
+    elif data == "back":
+        await start(update.callback_query, context)
+
+# ---------------- MAIN ----------------
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
-
-    # Commands
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("profile", profile))
-    app.add_handler(CommandHandler("hunt", hunt))
-    app.add_handler(CommandHandler("shop", shop))
-    app.add_handler(CommandHandler("daily", daily))
-    app.add_handler(CommandHandler("games", games))
-    app.add_handler(CommandHandler("boss", boss))
-
-    # Callbacks
-    app.add_handler(CallbackQueryHandler(fight_cb, pattern="fight_"))
-    app.add_handler(CallbackQueryHandler(buy_cb, pattern="buy_"))
-    app.add_handler(CallbackQueryHandler(games_cb, pattern="game_"))
-    app.add_handler(CallbackQueryHandler(boss_cb, pattern="boss_"))
-
-    print("🔥 Demon Killer Universe running...")
+    app.add_handler(CallbackQueryHandler(callback_router))
+    print("🔥 Kill Game Bot Running...")
     app.run_polling()
 
 if __name__ == "__main__":
